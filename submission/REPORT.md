@@ -2,22 +2,31 @@
 
 ## 1. Thông tin nhóm
 
-- Tên nhóm:
-- Repository URL:
-- Commit SHA cuối:
+- Tên nhóm: Nhóm K4 — Day 13 Observability (điền lại tên chính thức nếu lớp có quy định riêng)
+- Repository URL: https://github.com/thevietofficial-coder/-code-K4-DAY13-2A202601392-code-
+- Commit SHA cuối: xem `git log -1 --format=%H` trên nhánh `main` ngay trước khi nộp (mỗi lần cập nhật report sẽ tạo thêm 1 commit mới)
 - Thành viên và vai trò:
+  - Thành viên A — Nghia — API & Middleware (Correlation ID, exception handler)
+  - Thành viên B — Tuấn (Tuannt04) — Security Engineer (PII Scrubbing)
+  - Thành viên C — Minh (MinhHA04) — Metrics & Dashboard
+  - Thành viên D — Nguyễn Đình Duy — SRE & Alerts Engineer
+  - Thành viên E — Bùi Hoàng Việt (trưởng nhóm) — QA & Chief Investigator
 
 ## 2. Kết quả kỹ thuật
 
-- Điểm `validate_logs.py`: 30/100
+- Điểm `validate_logs.py`: 100/100 (chạy lại trên `data/logs.jsonl` sạch sau khi tất cả TODO CP1 đã merge — điểm cũ 30-50/100 là do log cũ từ trước khi A/B hoàn thiện middleware/PII còn lẫn trong file dev cục bộ)
 - Tổng số traces: 50+ (đếm qua Langfuse API `client.api.trace.list(tags="lab")`, xem `submission/evidence/cp2-tracing-prompt-version.md`)
 - Số PII leak còn lại: 0
 - Link/đường dẫn dashboard: bản tạm (E dựng thay C, snapshot tĩnh từ `data/logs.jsonl`) — xem mục 5. C có thể thay bằng dashboard runtime riêng nếu muốn.
 
 ## 3. Logging và tracing
 
-- Evidence correlation ID: **TODO (Thành viên A)**
-- Evidence PII redaction: **TODO (Thành viên B)**
+- Evidence correlation ID: `req-139f2fa0` xuất hiện đồng nhất trên cả 2 dòng log `request_received` và `response_sent` của cùng 1 request (đối chiếu qua `app/middleware.py:CorrelationIdMiddleware` + `bind_contextvars` trong `app/main.py`), kèm đủ enrichment `user_id_hash=2055254ee30a, session_id=s01, feature=qa, model=claude-sonnet-4-5, env=dev`. Trích `data/logs.jsonl`:
+  ```json
+  {"event":"request_received","correlation_id":"req-139f2fa0","session_id":"s01","feature":"qa","user_id_hash":"2055254ee30a","model":"claude-sonnet-4-5","env":"dev","ts":"2026-08-11T10:06:49.223405Z"}
+  {"event":"response_sent","correlation_id":"req-139f2fa0","session_id":"s01","feature":"qa","latency_ms":1044,"ts":"2026-08-11T10:06:50.699639Z"}
+  ```
+- Evidence PII redaction: cùng request trên gửi `"My email is student@vinuni.edu.vn"`, log ghi `"message_preview": "What is your refund policy? My email is [REDACTED_EMAIL]"` — email gốc không xuất hiện. Tương tự với số điện thoại (`req-0af4646a` → `[REDACTED_PHONE_VN]`) và số thẻ tín dụng (`req-edac0b37` → `[REDACTED_CREDIT_CARD]`), xử lý bởi `scrub_event` trong `app/logging_config.py` (đăng ký trước `JsonlFileProcessor`) dùng pattern trong `app/pii.py`. `python scripts/validate_logs.py` xác nhận độc lập: "Potential PII leaks detected: 0".
 - Evidence trace waterfall: trace `737d560702c7f58cf9fcb7ac6f563d13` (xem `submission/evidence/cp2-tracing-prompt-version.md` mục 4) — cần bổ sung ảnh chụp waterfall từ Langfuse UI.
 - Giải thích một span đáng chú ý: mỗi request tạo waterfall 3 tầng `run` (generation cha) → `llm.generate` (generation con) và `rag.retrieve` (span con). Việc tách `rag.retrieve` thành span riêng (mở rộng của Thành viên E, xem `app/mock_rag.py`) cho phép nhìn thấy riêng thời gian truy hồi tài liệu tách biệt khỏi thời gian gọi LLM — quan trọng cho điều tra CP3 vì incident chính thức của nhóm là `rag_slow`.
 
@@ -60,5 +69,9 @@ Với mỗi thành viên, ghi rõ nhiệm vụ và link commit/PR tương ứng.
 
 | Thành viên | Phần việc | Commit/PR | Điều đã học |
 |---|---|---|---|
-| Nguyễn Đình Duy (Thành viên D) | CP2 Thiết lập SLO (`config/slo.yaml`), Alert Rules (`config/alert_rules.yaml`), Alert Runbook (`docs/alerts.md`), bổ sung unit test `tests/test_slo_and_alerts.py` | [Commit SHA] | Học được cách thiết lập SLO/SLI chuẩn SRE, thiết kế symptom-based alerts dựa trên triệu chứng người dùng và xây dựng Alert Runbook ứng cứu sự cố bằng Correlation ID & Trace Waterfall. |
+| Nghia (Thành viên A) | CP1 Middleware (`app/middleware.py`: clear/bind contextvars, sinh `x-request-id` dạng `req-<8-hex>`, gắn header response), enrich context request trong `app/main.py`, bổ sung global exception handler (`generic_exception_handler`) cho lỗi ngoài luồng try/except chính | `417fcc3`, `c7c5dab` (PR #1) | Cách `structlog.contextvars` lan truyền field xuyên suốt một request mà không cần truyền tay qua từng hàm log; vì sao clear context đầu mỗi request là bắt buộc để tránh rò rỉ giữa các request. |
+| Tuấn — Tuannt04 (Thành viên B) | CP1 PII Scrubbing: mở rộng `PII_PATTERNS` trong `app/pii.py`, đăng ký `scrub_event` vào pipeline `structlog` trong `app/logging_config.py` (đặt trước `JsonlFileProcessor` để redact trước khi ghi file) | `f612441`, `f3ebabf` (PR #2) | Thứ tự processor trong `structlog` quyết định dữ liệu có bị redact trước khi ghi xuống đĩa hay không; PII có thể lọt qua nếu scrub chạy sau bước render/ghi. |
+| Minh — MinhHA04 (Thành viên C) | CP1/CP2 hoàn thiện `app/metrics.py` (snapshot/percentile), `docs/dashboard-spec.md`, `tests/test_dashboard_validator.py`, ảnh `dashboard-validator.png` | `fd74f95`, `77f77c4`, `e7dbdc4` (PR #3, #5, #6) | Cách tính `error_rate_pct` đúng cần lấy mẫu số từ `request_received`/`request_failed` trong log thay vì chỉ dựa vào bộ đếm in-memory (có thể thiếu request lỗi); cách viết test cho validator contract. |
+| Nguyễn Đình Duy (Thành viên D) | CP2 Thiết lập SLO (`config/slo.yaml`), Alert Rules (`config/alert_rules.yaml`), Alert Runbook (`docs/alerts.md`), bổ sung unit test `tests/test_slo_and_alerts.py` | `d013c52` (PR #4) | Học được cách thiết lập SLO/SLI chuẩn SRE, thiết kế symptom-based alerts dựa trên triệu chứng người dùng và xây dựng Alert Runbook ứng cứu sự cố bằng Correlation ID & Trace Waterfall. |
+| Bùi Hoàng Việt (Thành viên E, trưởng nhóm) | CP2: bọc trace riêng cho RAG/LLM (`app/mock_rag.py`, `app/mock_llm.py`), tạo prompt v1/v2 + label/rollback trên Langfuse, dashboard tạm thay C, evidence tracing/prompt/dashboard. CP3: dẫn dắt điều tra challenge `rag_slow` (baseline vs incident, khoanh vùng span, đối chiếu log), viết `submission/REPORT.md` | `a836eb0`, `f734c83`, `f378d42`, `26041e7` | Cách tách span con bằng `@observe()` lồng nhau giúp khoanh vùng root cause chính xác hơn nhìn tổng latency; latency đo ở tầng server (`latency_ms`) có thể thấp hơn nhiều so với latency client thấy được nếu có nghẽn ở tầng ASGI/middleware phía trước. |
 
