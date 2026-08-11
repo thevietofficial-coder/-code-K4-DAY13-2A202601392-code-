@@ -15,7 +15,7 @@
 ## 2. Kết quả kỹ thuật
 
 - Điểm `validate_logs.py`: 100/100 (chạy lại trên `data/logs.jsonl` sạch sau khi tất cả TODO CP1 đã merge — điểm cũ 30-50/100 là do log cũ từ trước khi A/B hoàn thiện middleware/PII còn lẫn trong file dev cục bộ)
-- Tổng số traces: 50+ (đếm qua Langfuse API `client.api.trace.list(tags="lab")`, xem `submission/evidence/cp2-tracing-prompt-version.md`)
+- Tổng số traces: 50+ (đếm qua Langfuse API `client.api.trace.list(tags="lab")`; ảnh danh sách: `submission/evidence/trace-list.png`, chi tiết: `submission/evidence/cp2-tracing-prompt-version.md`)
 - Số PII leak còn lại: 0
 - Link/đường dẫn dashboard: bản tạm (E dựng thay C, snapshot tĩnh từ `data/logs.jsonl`) — xem mục 5. C có thể thay bằng dashboard runtime riêng nếu muốn.
 
@@ -26,8 +26,9 @@
   {"event":"request_received","correlation_id":"req-139f2fa0","session_id":"s01","feature":"qa","user_id_hash":"2055254ee30a","model":"claude-sonnet-4-5","env":"dev","ts":"2026-08-11T10:06:49.223405Z"}
   {"event":"response_sent","correlation_id":"req-139f2fa0","session_id":"s01","feature":"qa","latency_ms":1044,"ts":"2026-08-11T10:06:50.699639Z"}
   ```
-- Evidence PII redaction: cùng request trên gửi `"My email is student@vinuni.edu.vn"`, log ghi `"message_preview": "What is your refund policy? My email is [REDACTED_EMAIL]"` — email gốc không xuất hiện. Tương tự với số điện thoại (`req-0af4646a` → `[REDACTED_PHONE_VN]`) và số thẻ tín dụng (`req-edac0b37` → `[REDACTED_CREDIT_CARD]`), xử lý bởi `scrub_event` trong `app/logging_config.py` (đăng ký trước `JsonlFileProcessor`) dùng pattern trong `app/pii.py`. `python scripts/validate_logs.py` xác nhận độc lập: "Potential PII leaks detected: 0".
-- Evidence trace waterfall: trace `737d560702c7f58cf9fcb7ac6f563d13` (xem `submission/evidence/cp2-tracing-prompt-version.md` mục 4) — cần bổ sung ảnh chụp waterfall từ Langfuse UI.
+  (file đầy đủ: `submission/evidence/correlation-id-log.json`)
+- Evidence PII redaction: cùng request trên gửi input chứa email test (fixture có sẵn tại `data/sample_queries.jsonl` dòng 1, không in lại nguyên văn ở đây để tránh trùng lặp PII trong file đã commit), log ghi `"message_preview": "What is your refund policy? My email is [REDACTED_EMAIL]"` — email gốc không xuất hiện. Tương tự với số điện thoại (`req-0af4646a` → `[REDACTED_PHONE_VN]`) và số thẻ tín dụng (`req-edac0b37` → `[REDACTED_CREDIT_CARD]`), xử lý bởi `scrub_event` trong `app/logging_config.py` (đăng ký trước `JsonlFileProcessor`) dùng pattern trong `app/pii.py`. Chi tiết đầy đủ: `submission/evidence/pii-redaction-proof.txt`. `python scripts/validate_logs.py` xác nhận độc lập: "Potential PII leaks detected: 0" (kết quả đầy đủ: `submission/evidence/validate-logs-final.txt`).
+- Evidence trace waterfall: ảnh `submission/evidence/trace-waterfall.png` (trace `run` → `rag.retrieve` + `llm.generate`, session `s10`); chi tiết số liệu trace `737d560702c7f58cf9fcb7ac6f563d13` trong `submission/evidence/cp2-tracing-prompt-version.md` mục 4.
 - Giải thích một span đáng chú ý: mỗi request tạo waterfall 3 tầng `run` (generation cha) → `llm.generate` (generation con) và `rag.retrieve` (span con). Việc tách `rag.retrieve` thành span riêng (mở rộng của Thành viên E, xem `app/mock_rag.py`) cho phép nhìn thấy riêng thời gian truy hồi tài liệu tách biệt khỏi thời gian gọi LLM — quan trọng cho điều tra CP3 vì incident chính thức của nhóm là `rag_slow`.
 
 ## 4. Prompt versioning
@@ -36,7 +37,7 @@
 - Version/label baseline: version 1, label `baseline` (nội dung `Feature={{feature}}\nDocs={{docs}}\nQuestion={{message}}`)
 - Version/label candidate: version 2, label `candidate` (v1 + thêm hướng dẫn "Answer in at most 3 concise sentences.")
 - Trace ID của mỗi version: baseline → `737d560702c7f58cf9fcb7ac6f563d13` (prompt_version=1); candidate → `f998e11004eb1af0d9642f7b7278822c` (prompt_version=2)
-- Bằng chứng đổi label hoặc rollback: chuyển `production` sang v2 → trace `fa93db2f3e2beab28fa44dda968e4358` (prompt_version=2, prompt_label=production); rollback `production` về v1 → trace `61eaae867c8db9611495ea1fc0ff51c8` (prompt_version=1, prompt_label=production). Chi tiết đầy đủ trong `submission/evidence/cp2-tracing-prompt-version.md`. Ảnh chụp màn hình Langfuse UI (Prompts → day13-chat → Versions/Labels) còn thiếu, cần chụp thủ công.
+- Bằng chứng đổi label hoặc rollback: chuyển `production` sang v2 → trace `fa93db2f3e2beab28fa44dda968e4358` (prompt_version=2, prompt_label=production); rollback `production` về v1 → trace `61eaae867c8db9611495ea1fc0ff51c8` (prompt_version=1, prompt_label=production). Ảnh: `submission/evidence/prompt-versions.png` (danh sách 2 version) và `submission/evidence/prompt-label-rollback.png` (trạng thái label sau rollback). Chi tiết đầy đủ trong `submission/evidence/cp2-tracing-prompt-version.md`.
 
 ## 5. Dashboard, SLO và alerts
 
@@ -53,7 +54,7 @@
 
 ## 6. Điều tra challenge
 
-Chi tiết đầy đủ (bảng đối chiếu 5 session, log timestamp, trace span breakdown): `submission/evidence/cp3-challenge-investigation.md`.
+Chi tiết đầy đủ (bảng đối chiếu 5 session, log timestamp, trace span breakdown): `submission/evidence/cp3-challenge-investigation.md`. **Còn thiếu 1 ảnh chụp thủ công:** mở trace `04198e5255b430eb914710c7ded4387b` trên Langfuse (session `k4-challenge-s01`, incident bật) và chụp waterfall thấy rõ span `rag.retrieve` ~2.5s — lưu thành `submission/evidence/challenge-trace-waterfall.png`.
 
 - Challenge ID: `day13-k4-observability-v1` (cohort K4, incident `rag_slow`, `latency_threshold_ms=2000`, `affected_feature=monitoring`)
 - Triệu chứng từ metrics: `latency_ms` của cả 5/5 request `feature=monitoring` nhảy từ ~150ms (baseline, incident tắt) lên ~2651-2652ms (incident bật) — vượt `latency_threshold_ms=2000` của challenge và vượt hẳn baseline bình thường

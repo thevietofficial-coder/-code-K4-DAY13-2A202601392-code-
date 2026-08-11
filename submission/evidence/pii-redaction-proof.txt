@@ -1,0 +1,13 @@
+PII redaction proof - input goc lay tu data/sample_queries.jsonl (fixture co san cua lab, khong in lai o day de tranh trung lap PII trong file da commit).
+
+correlation_id: req-139f2fa0
+  input goc: xem data/sample_queries.jsonl dong 1 (email)
+  ghi trong data/logs.jsonl (da redact): What is your refund policy? My email is [REDACTED_EMAIL]
+
+correlation_id: req-0af4646a
+  input goc: xem data/sample_queries.jsonl dong 5 (SDT)
+  ghi trong data/logs.jsonl (da redact): Here is my phone [REDACTED_PHONE_VN], what should be logged?
+
+correlation_id: req-edac0b37
+  input goc: xem data/sample_queries.jsonl dong 9 (the tin dung)
+  ghi trong data/logs.jsonl (da redact): What is the policy for PII and credit card [REDACTED_CREDIT_CARD]?
