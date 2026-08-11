@@ -12,7 +12,7 @@
 - Điểm `validate_logs.py`: 30/100
 - Tổng số traces: 50+ (đếm qua Langfuse API `client.api.trace.list(tags="lab")`, xem `submission/evidence/cp2-tracing-prompt-version.md`)
 - Số PII leak còn lại: 0
-- Link/đường dẫn dashboard: **TODO (Thành viên C)** — `http://127.0.0.1:8000` hiện là API, chưa phải dashboard runtime; cần thay bằng link/ảnh dashboard thật đủ 6 panel
+- Link/đường dẫn dashboard: bản tạm (E dựng thay C, snapshot tĩnh từ `data/logs.jsonl`) — xem mục 5. C có thể thay bằng dashboard runtime riêng nếu muốn.
 
 ## 3. Logging và tracing
 
@@ -32,7 +32,7 @@
 ## 5. Dashboard, SLO và alerts
 
 - Kết quả `validate_dashboard.py`: HỢP LỆ: 6/6 panel
-- Evidence dashboard: **TODO (Thành viên C)** — `submission/evidence/dashboard.png` chưa tồn tại; `config/dashboard.yaml` mới dừng ở spec/test (`docs/dashboard-spec.md`, `tests/test_dashboard_validator.py`), chưa có dashboard runtime thật để chụp ảnh
+- Evidence dashboard: `submission/evidence/dashboard.png` (chụp từ bản dashboard tạm thời do Thành viên E dựng thay C — đọc trực tiếp `data/logs.jsonl`, đúng 6 panel/đơn vị/threshold theo `config/dashboard.yaml`, script tính số liệu: xem `submission/evidence/cp2-dashboard.md`). C có thể thay bằng dashboard runtime riêng (Streamlit/Grafana/…) nếu muốn, miễn giữ đúng 6 panel/threshold của contract.
 - SLO đã chọn và lý do:
   - `latency_p95_ms` <= 3000ms (Target 99.5%): Giữ trải nghiệm tương tác với AI API mượt mà, phản hồi không quá 3 giây.
   - `error_rate_pct` <= 2.0% (Target 99.0%): Đảm bảo tính sẵn sàng cao, hạn chế lỗi HTTP 500/503.
