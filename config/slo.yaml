@@ -1,16 +1,20 @@
+# TODO: Completed by Member D (Nguyen Dinh Duy - SRE & Alerts Engineer)
 service: day13-observability-lab
 window: 28d
 slis:
   latency_p95_ms:
     objective: 3000
     target: 99.5
-    note: Replace with your group's target
+    note: Target latency P95 <= 3000ms for 99.5% of requests over 28d window
   error_rate_pct:
-    objective: 2
+    objective: 2.0
     target: 99.0
+    note: Target error rate <= 2.0% for 99.0% of request windows over 28d
   daily_cost_usd:
     objective: 2.5
     target: 100.0
+    note: Target daily cost <= 2.5 USD for 100.0% of operational days
   quality_score_avg:
     objective: 0.75
     target: 95.0
+    note: Target average quality score >= 0.75 for 95.0% of evaluation windows
