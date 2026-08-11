@@ -44,13 +44,15 @@
 
 ## 6. Điều tra challenge
 
-- Challenge ID:
-- Triệu chứng từ metrics:
-- Trace ID liên quan:
-- Log line/correlation ID liên quan:
-- Root cause:
-- Fix action:
-- Preventive measure:
+Chi tiết đầy đủ (bảng đối chiếu 5 session, log timestamp, trace span breakdown): `submission/evidence/cp3-challenge-investigation.md`.
+
+- Challenge ID: `day13-k4-observability-v1` (cohort K4, incident `rag_slow`, `latency_threshold_ms=2000`, `affected_feature=monitoring`)
+- Triệu chứng từ metrics: `latency_ms` của cả 5/5 request `feature=monitoring` nhảy từ ~150ms (baseline, incident tắt) lên ~2651-2652ms (incident bật) — vượt `latency_threshold_ms=2000` của challenge và vượt hẳn baseline bình thường
+- Trace ID liên quan: cặp trước/sau tiêu biểu cho session `k4-challenge-s01` — tắt: `4674e302731ccfac7601a78813845910` (span `rag.retrieve`=0ms); bật: `04198e5255b430eb914710c7ded4387b` (span `rag.retrieve`=2502ms, `llm.generate`=151ms không đổi). 4 session còn lại cho kết quả tương tự, xem bảng đầy đủ trong file evidence.
+- Log line/correlation ID liên quan: `req-a21686e4` (s01), `req-a9a1d40f` (s02), `req-7f992c69` (s03), `req-8535c3d6` (s04), `req-c834d151` (s05) — tất cả `feature=monitoring`, `latency_ms` 2651-2652, đối chiếu khớp với trace ở trên
+- Root cause: bước RAG retrieval (`app/mock_rag.py:retrieve()`) bị delay giả lập 2.5s/request khi cờ incident `rag_slow` bật, chiếm >94% tổng latency của request (span `rag.retrieve` 2501-2502ms trên tổng ~2652-2653ms), trong khi `llm.generate` không đổi (~150ms)
+- Fix action: đặt timeout + fallback cho lời gọi retrieval; cache kết quả truy hồi cho câu hỏi lặp lại; chạy `retrieve()` qua thread pool (`asyncio.to_thread`) thay vì gọi đồng bộ chặn event loop — phát hiện phụ: log timestamp cho thấy 5 request bị server xử lý hoàn toàn tuần tự dù gửi đồng thời, vì `time.sleep()` đồng bộ trong handler `async def` chặn event loop
+- Preventive measure: alert latency P95 tách riêng theo `feature` (phối hợp `HighLatencyP95Warning` trong `config/alert_rules.yaml`); theo dõi riêng thời lượng span `rag.retrieve` như một tín hiệu độc lập; thêm synthetic/canary request định kỳ cho bước retrieval để phát hiện sớm trước khi ảnh hưởng người dùng thật
 
 ## 7. Đóng góp cá nhân
 
