@@ -2,7 +2,7 @@
 
 ## 1. Thông tin nhóm
 
-- Tên nhóm: Nhóm K4 — Day 13 Observability (điền lại tên chính thức nếu lớp có quy định riêng)
+- Tên nhóm: SilverFlag 
 - Repository URL: https://github.com/thevietofficial-coder/-code-K4-DAY13-2A202601392-code-
 - Commit SHA cuối: xem `git log -1 --format=%H` trên nhánh `main` ngay trước khi nộp (mỗi lần cập nhật report sẽ tạo thêm 1 commit mới)
 - Thành viên và vai trò:
