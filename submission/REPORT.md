@@ -3,14 +3,14 @@
 ## 1. Thông tin nhóm
 
 - Tên nhóm: SilverFlag - C401
-- Repository URL: https://github.com/thevietofficial-coder/-code-K4-DAY13-2A202601392-code-
+- Repository URL: https://github.com/thevietofficial-coder/K4-DAY13-2A202601392
 - Commit SHA cuối: xem `git log -1 --format=%H` trên nhánh `main` ngay trước khi nộp (mỗi lần cập nhật report sẽ tạo thêm 1 commit mới)
 - Thành viên và vai trò:
-  - Thành viên A — Nghia — API & Middleware (Correlation ID, exception handler)
-  - Thành viên B — Tuấn (Tuannt04) — Security Engineer (PII Scrubbing)
-  - Thành viên C — Minh (MinhHA04) — Metrics & Dashboard
-  - Thành viên D — Nguyễn Đình Duy — SRE & Alerts Engineer
-  - Thành viên E — Bùi Hoàng Việt (trưởng nhóm) — QA & Chief Investigator
+  - Thành viên A — Trần Trọng Nghĩa - 2A202601370 — API & Middleware (Correlation ID, exception handler)
+  - Thành viên B — Nguyễn Thừa Tuân - 2A202601330 — Security Engineer (PII Scrubbing)
+  - Thành viên C — Hoàng Anh Minh - 2A202601192 — Metrics & Dashboard
+  - Thành viên D — Nguyễn Đình Duy - 2A202601046 — SRE & Alerts Engineer
+  - Thành viên E — Bùi Hoàng Việt - 2A202601392 (trưởng nhóm) — QA & Chief Investigator
 
 ## 2. Kết quả kỹ thuật
 
@@ -70,9 +70,9 @@ Với mỗi thành viên, ghi rõ nhiệm vụ và link commit/PR tương ứng.
 
 | Thành viên | Phần việc | Commit/PR | Điều đã học |
 |---|---|---|---|
-| Nghia (Thành viên A) | CP1 Middleware (`app/middleware.py`: clear/bind contextvars, sinh `x-request-id` dạng `req-<8-hex>`, gắn header response), enrich context request trong `app/main.py`, bổ sung global exception handler (`generic_exception_handler`) cho lỗi ngoài luồng try/except chính | `417fcc3`, `c7c5dab` (PR #1) | Cách `structlog.contextvars` lan truyền field xuyên suốt một request mà không cần truyền tay qua từng hàm log; vì sao clear context đầu mỗi request là bắt buộc để tránh rò rỉ giữa các request. |
-| Tuấn — Tuannt04 (Thành viên B) | CP1 PII Scrubbing: mở rộng `PII_PATTERNS` trong `app/pii.py`, đăng ký `scrub_event` vào pipeline `structlog` trong `app/logging_config.py` (đặt trước `JsonlFileProcessor` để redact trước khi ghi file) | `f612441`, `f3ebabf` (PR #2) | Thứ tự processor trong `structlog` quyết định dữ liệu có bị redact trước khi ghi xuống đĩa hay không; PII có thể lọt qua nếu scrub chạy sau bước render/ghi. |
-| Minh — MinhHA04 (Thành viên C) | CP1/CP2 hoàn thiện `app/metrics.py` (snapshot/percentile), `docs/dashboard-spec.md`, `tests/test_dashboard_validator.py`, ảnh `dashboard-validator.png` | `fd74f95`, `77f77c4`, `e7dbdc4` (PR #3, #5, #6) | Cách tính `error_rate_pct` đúng cần lấy mẫu số từ `request_received`/`request_failed` trong log thay vì chỉ dựa vào bộ đếm in-memory (có thể thiếu request lỗi); cách viết test cho validator contract. |
-| Nguyễn Đình Duy (Thành viên D) | CP2 Thiết lập SLO (`config/slo.yaml`), Alert Rules (`config/alert_rules.yaml`), Alert Runbook (`docs/alerts.md`), bổ sung unit test `tests/test_slo_and_alerts.py` | `d013c52` (PR #4) | Học được cách thiết lập SLO/SLI chuẩn SRE, thiết kế symptom-based alerts dựa trên triệu chứng người dùng và xây dựng Alert Runbook ứng cứu sự cố bằng Correlation ID & Trace Waterfall. |
-| Bùi Hoàng Việt (Thành viên E, trưởng nhóm) | CP2: bọc trace riêng cho RAG/LLM (`app/mock_rag.py`, `app/mock_llm.py`), tạo prompt v1/v2 + label/rollback trên Langfuse, dashboard tạm thay C, evidence tracing/prompt/dashboard. CP3: dẫn dắt điều tra challenge `rag_slow` (baseline vs incident, khoanh vùng span, đối chiếu log), viết `submission/REPORT.md` | `a836eb0`, `f734c83`, `f378d42`, `26041e7` | Cách tách span con bằng `@observe()` lồng nhau giúp khoanh vùng root cause chính xác hơn nhìn tổng latency; latency đo ở tầng server (`latency_ms`) có thể thấp hơn nhiều so với latency client thấy được nếu có nghẽn ở tầng ASGI/middleware phía trước. |
+| Trần Trọng Nghĩa - 2A202601370 (Thành viên A) | CP1 Middleware (`app/middleware.py`: clear/bind contextvars, sinh `x-request-id` dạng `req-<8-hex>`, gắn header response), enrich context request trong `app/main.py`, bổ sung global exception handler (`generic_exception_handler`) cho lỗi ngoài luồng try/except chính | `417fcc3`, `c7c5dab` (PR #1) | Cách `structlog.contextvars` lan truyền field xuyên suốt một request mà không cần truyền tay qua từng hàm log; vì sao clear context đầu mỗi request là bắt buộc để tránh rò rỉ giữa các request. |
+| Nguyễn Thừa Tuân - 2A202601330 (Thành viên B) | CP1 PII Scrubbing: mở rộng `PII_PATTERNS` trong `app/pii.py`, đăng ký `scrub_event` vào pipeline `structlog` trong `app/logging_config.py` (đặt trước `JsonlFileProcessor` để redact trước khi ghi file) | `f612441`, `f3ebabf` (PR #2) | Thứ tự processor trong `structlog` quyết định dữ liệu có bị redact trước khi ghi xuống đĩa hay không; PII có thể lọt qua nếu scrub chạy sau bước render/ghi. |
+| Hoàng Anh Minh - 2A202601192 (Thành viên C) | CP1/CP2 hoàn thiện `app/metrics.py` (snapshot/percentile), `docs/dashboard-spec.md`, `tests/test_dashboard_validator.py`, ảnh `dashboard-validator.png` | `fd74f95`, `77f77c4`, `e7dbdc4` (PR #3, #5, #6) | Cách tính `error_rate_pct` đúng cần lấy mẫu số từ `request_received`/`request_failed` trong log thay vì chỉ dựa vào bộ đếm in-memory (có thể thiếu request lỗi); cách viết test cho validator contract. |
+| Nguyễn Đình Duy - 2A202601046 (Thành viên D) | CP2 Thiết lập SLO (`config/slo.yaml`), Alert Rules (`config/alert_rules.yaml`), Alert Runbook (`docs/alerts.md`), bổ sung unit test `tests/test_slo_and_alerts.py` | `d013c52` (PR #4) | Học được cách thiết lập SLO/SLI chuẩn SRE, thiết kế symptom-based alerts dựa trên triệu chứng người dùng và xây dựng Alert Runbook ứng cứu sự cố bằng Correlation ID & Trace Waterfall. |
+| Bùi Hoàng Việt - 2A202601392 (Thành viên E, trưởng nhóm) | CP2: bọc trace riêng cho RAG/LLM (`app/mock_rag.py`, `app/mock_llm.py`), tạo prompt v1/v2 + label/rollback trên Langfuse, dashboard tạm thay C, evidence tracing/prompt/dashboard. CP3: dẫn dắt điều tra challenge `rag_slow` (baseline vs incident, khoanh vùng span, đối chiếu log), viết `submission/REPORT.md` | `a836eb0`, `f734c83`, `f378d42`, `26041e7` | Cách tách span con bằng `@observe()` lồng nhau giúp khoanh vùng root cause chính xác hơn nhìn tổng latency; latency đo ở tầng server (`latency_ms`) có thể thấp hơn nhiều so với latency client thấy được nếu có nghẽn ở tầng ASGI/middleware phía trước. |
 
