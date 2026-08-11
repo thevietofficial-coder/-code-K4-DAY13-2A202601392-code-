@@ -10,29 +10,29 @@
 ## 2. Kết quả kỹ thuật
 
 - Điểm `validate_logs.py`: 30/100
-- Tổng số traces: Chưa xác định (`validate_logs.py` không thống kê traces)
+- Tổng số traces: 50+ (đếm qua Langfuse API `client.api.trace.list(tags="lab")`, xem `submission/evidence/cp2-tracing-prompt-version.md`)
 - Số PII leak còn lại: 0
-- Link/đường dẫn dashboard: http://127.0.0.1:8000
+- Link/đường dẫn dashboard: **TODO (Thành viên C)** — `http://127.0.0.1:8000` hiện là API, chưa phải dashboard runtime; cần thay bằng link/ảnh dashboard thật đủ 6 panel
 
 ## 3. Logging và tracing
 
-- Evidence correlation ID:
-- Evidence PII redaction:
-- Evidence trace waterfall:
-- Giải thích một span đáng chú ý:
+- Evidence correlation ID: **TODO (Thành viên A)**
+- Evidence PII redaction: **TODO (Thành viên B)**
+- Evidence trace waterfall: trace `737d560702c7f58cf9fcb7ac6f563d13` (xem `submission/evidence/cp2-tracing-prompt-version.md` mục 4) — cần bổ sung ảnh chụp waterfall từ Langfuse UI.
+- Giải thích một span đáng chú ý: mỗi request tạo waterfall 3 tầng `run` (generation cha) → `llm.generate` (generation con) và `rag.retrieve` (span con). Việc tách `rag.retrieve` thành span riêng (mở rộng của Thành viên E, xem `app/mock_rag.py`) cho phép nhìn thấy riêng thời gian truy hồi tài liệu tách biệt khỏi thời gian gọi LLM — quan trọng cho điều tra CP3 vì incident chính thức của nhóm là `rag_slow`.
 
 ## 4. Prompt versioning
 
-- Prompt name:
-- Version/label baseline:
-- Version/label candidate:
-- Trace ID của mỗi version:
-- Bằng chứng đổi label hoặc rollback:
+- Prompt name: `day13-chat`
+- Version/label baseline: version 1, label `baseline` (nội dung `Feature={{feature}}\nDocs={{docs}}\nQuestion={{message}}`)
+- Version/label candidate: version 2, label `candidate` (v1 + thêm hướng dẫn "Answer in at most 3 concise sentences.")
+- Trace ID của mỗi version: baseline → `737d560702c7f58cf9fcb7ac6f563d13` (prompt_version=1); candidate → `f998e11004eb1af0d9642f7b7278822c` (prompt_version=2)
+- Bằng chứng đổi label hoặc rollback: chuyển `production` sang v2 → trace `fa93db2f3e2beab28fa44dda968e4358` (prompt_version=2, prompt_label=production); rollback `production` về v1 → trace `61eaae867c8db9611495ea1fc0ff51c8` (prompt_version=1, prompt_label=production). Chi tiết đầy đủ trong `submission/evidence/cp2-tracing-prompt-version.md`. Ảnh chụp màn hình Langfuse UI (Prompts → day13-chat → Versions/Labels) còn thiếu, cần chụp thủ công.
 
 ## 5. Dashboard, SLO và alerts
 
 - Kết quả `validate_dashboard.py`: HỢP LỆ: 6/6 panel
-- Evidence dashboard: `submission/evidence/dashboard.png`
+- Evidence dashboard: **TODO (Thành viên C)** — `submission/evidence/dashboard.png` chưa tồn tại; `config/dashboard.yaml` mới dừng ở spec/test (`docs/dashboard-spec.md`, `tests/test_dashboard_validator.py`), chưa có dashboard runtime thật để chụp ảnh
 - SLO đã chọn và lý do:
   - `latency_p95_ms` <= 3000ms (Target 99.5%): Giữ trải nghiệm tương tác với AI API mượt mà, phản hồi không quá 3 giây.
   - `error_rate_pct` <= 2.0% (Target 99.0%): Đảm bảo tính sẵn sàng cao, hạn chế lỗi HTTP 500/503.
