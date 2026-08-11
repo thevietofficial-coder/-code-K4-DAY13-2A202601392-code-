@@ -27,6 +27,14 @@ def record_error(error_type: str) -> None:
     ERRORS[error_type] += 1
 
 
+def calculate_error_rate_pct(successful_requests: int, errors: Counter[str]) -> float:
+    failed_requests = sum(errors.values())
+    total_requests = successful_requests + failed_requests
+    if total_requests == 0:
+        return 0.0
+    return round((failed_requests / total_requests) * 100, 2)
+
+
 
 def percentile(values: list[int], p: int) -> float:
     if not values:
@@ -38,8 +46,12 @@ def percentile(values: list[int], p: int) -> float:
 
 
 def snapshot() -> dict:
+    failed_requests = sum(ERRORS.values())
+    total_requests = TRAFFIC + failed_requests
     return {
-        "traffic": TRAFFIC,
+        "traffic": total_requests,
+        "successful_requests": TRAFFIC,
+        "failed_requests": failed_requests,
         "latency_p50": percentile(REQUEST_LATENCIES, 50),
         "latency_p95": percentile(REQUEST_LATENCIES, 95),
         "latency_p99": percentile(REQUEST_LATENCIES, 99),
@@ -47,6 +59,7 @@ def snapshot() -> dict:
         "total_cost_usd": round(sum(REQUEST_COSTS), 4),
         "tokens_in_total": sum(REQUEST_TOKENS_IN),
         "tokens_out_total": sum(REQUEST_TOKENS_OUT),
+        "error_rate_pct": calculate_error_rate_pct(TRAFFIC, ERRORS),
         "error_breakdown": dict(ERRORS),
         "quality_avg": round(mean(QUALITY_SCORES), 4) if QUALITY_SCORES else 0.0,
     }
